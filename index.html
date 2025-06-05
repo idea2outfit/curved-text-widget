@@ -1,56 +1,86 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Curved Text Generator</title>
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      width: 100%;
-      height: 100%;
+    body {
       font-family: sans-serif;
-      background: white;
-    }
-    #svgContainer {
-      width: 100%;
-      height: 100%;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #fff;
     }
+
+    #container {
+      position: relative;
+      width: 100%;
+      max-width: 700px;
+    }
+
     svg {
       width: 100%;
       height: 400px;
+      overflow: visible;
     }
-    text {
-      font-size: 36px;
-      fill: black;
-      dominant-baseline: middle;
-      text-anchor: middle;
+
+    #curvedText {
+      cursor: move;
+      user-select: none;
     }
   </style>
 </head>
 <body>
-  <div id="svgContainer">
+  <div id="container">
     <svg viewBox="0 0 600 400">
-      <defs>
-        <path id="curvePath" d="M 100 200 Q 300 200 500 200" fill="transparent" />
-      </defs>
-      <text>
-        <textPath id="textPath" href="#curvePath" startOffset="50%" text-anchor="middle">Your Text</textPath>
+      <path id="curvePath" d="M 100 200 Q 300 200 500 200" fill="transparent" stroke="lightgray"/>
+      <text id="curvedText" font-size="32" fill="black">
+        <textPath id="textPath" href="#curvePath" startOffset="50%" text-anchor="middle">
+          Your Text Here
+        </textPath>
       </text>
     </svg>
   </div>
 
   <script>
+    let offsetX, offsetY, isDragging = false;
+    const curvedText = document.getElementById('curvedText');
+
+    curvedText.addEventListener('mousedown', function (e) {
+      isDragging = true;
+      offsetX = e.clientX;
+      offsetY = e.clientY;
+    });
+
+    document.addEventListener('mousemove', function (e) {
+      if (isDragging) {
+        const dx = e.clientX - offsetX;
+        const dy = e.clientY - offsetY;
+        const matrix = curvedText.transform.baseVal.getItem(0).matrix;
+        matrix.e += dx;
+        matrix.f += dy;
+        curvedText.setAttribute('transform', `translate(${matrix.e}, ${matrix.f})`);
+        offsetX = e.clientX;
+        offsetY = e.clientY;
+      }
+    });
+
+    document.addEventListener('mouseup', function () {
+      isDragging = false;
+    });
+
+    if (!curvedText.transform.baseVal.length) {
+      const transform = curvedText.ownerSVGElement.createSVGTransform();
+      transform.setTranslate(0, 0);
+      curvedText.transform.baseVal.appendItem(transform);
+    }
+
     window.addEventListener('message', (event) => {
       const data = event.data;
-      console.log("Received postMessage:", data); // ✅ debug line
-
       if (data.type === 'updateText') {
         document.getElementById('textPath').textContent = data.text || '';
       }
@@ -62,7 +92,7 @@
         const controlY = 200 - clamped;
         path.setAttribute('d', `M 100 200 Q 300 ${controlY} 500 200`);
       }
-    }, false);
+    });
   </script>
 </body>
 </html>
