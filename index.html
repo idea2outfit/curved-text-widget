@@ -1,0 +1,68 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Curved Text Generator</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      font-family: sans-serif;
+      background: white;
+    }
+    #svgContainer {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    svg {
+      width: 100%;
+      height: 400px;
+    }
+    text {
+      font-size: 36px;
+      fill: black;
+      dominant-baseline: middle;
+      text-anchor: middle;
+    }
+  </style>
+</head>
+<body>
+  <div id="svgContainer">
+    <svg viewBox="0 0 600 400">
+      <defs>
+        <path id="curvePath" d="M 100 200 Q 300 200 500 200" fill="transparent" />
+      </defs>
+      <text>
+        <textPath id="textPath" href="#curvePath" startOffset="50%" text-anchor="middle">Your Text</textPath>
+      </text>
+    </svg>
+  </div>
+
+  <script>
+    window.addEventListener('message', (event) => {
+      const data = event.data;
+      console.log("Received postMessage:", data); // ✅ debug line
+
+      if (data.type === 'updateText') {
+        document.getElementById('textPath').textContent = data.text || '';
+      }
+
+      if (data.type === 'updateCurve') {
+        const radius = parseFloat(data.radius);
+        const path = document.getElementById('curvePath');
+        const clamped = Math.max(-100, Math.min(100, radius));
+        const controlY = 200 - clamped;
+        path.setAttribute('d', `M 100 200 Q 300 ${controlY} 500 200`);
+      }
+    }, false);
+  </script>
+</body>
+</html>
